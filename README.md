@@ -8,36 +8,13 @@ Apesar do microsserviço de autenticação ser responsável pela criação de us
 
 # Descrição
 
-O microsserviço de autenticação é responsável pela implementação do serviço de identificação de usuários. Além disso, são definidos tabelas para o banco de dados, tais como usuário, função e vínculo de usuários com funções. Como supracitado, o autenticador também definirá tabelas de permissões, específicas para esse microsserviço.
+Este serviço de "adapter" é um worker com o objetivo de transmitir mensagens entre serviços.
+Para isso, a rotina é definida da seguinte maneira:
 
-# Aspectos Técnicos
-
-## FAST-API
-
-Os microsserviços serão implementados utilizando o framework web FAST-API. É um framework baseado no módulo de type-hints do python. A partir dos type-hints, o framework realiza a documentação de maneira automática, definindo inputs e outputs de um endpoint. 
-
-O FAST-API implementa a especificação ASGI (Asynchronous Server Gateway Interface), que provê um padrão assíncrono (e também um padrão síncrono) para implementação de aplicativos em python. Nesse projeto, utilizaremos a funcionalidade assíncrona do FAST-API em nosso favor, principalmente ao requisitar o banco de dados.
-
-## SQL-Alchemy
-
-O SQL-Alchemy é uma biblioteca em python, com o objetivo de facilitar a comunicação entre programas e python com um banco de dados relacional. 
-
-Nesse projeto, utilizaremos o ORM (Object Relational Mapper) do SQL-Alchemy, conectando a um banco de dados PostgreSQL. Um ORM é uma ferramenta capaz de traduzir classes do python em tabelas. Além disso, funções em python podem representar queries e statements.
-
-Além disso, o ORM provê uma flexibilidade de tecnologias de banco de dados. A tradução, citada anteriormente, é realizada de maneira similar nos bancos de dados que o SQL-Alchemy implementa. Por exemplo, se houver necessidade de alterar a tecnologia de banco de dados PostgreSQL vigente para outra, como MySQL, não haverá muitos problemas.
-
-## Alembic
-
-O Alembic é uma ferramenta de migração de dados, que funciona a partir da 'engine' disponível no SQL-Alchemy. O Alembic se conecta à um banco de dados e define um versionamento 'alembic_version'. A partir do 'metadata' do banco de dados criado no projeto, o Alembic é capaz de verificar se foram implementadas alterações nas classes que definem os modelos do banco de dados. Caso requisitado pelo programador, o Alembic pode gerar um script de revisão, com as alterações necessárias no banco de dados. Ao executar esse script, o banco de dados é atualizado.
-
-Podemos citar algumas funcionalidades importantes no CLI do Alembic:
-
-- alembic init: Gera os templates necessários para o funcionamento do Alembic. Algumas informações devem ser preenchidas no template, como a conexão com o banco de dados
-- alembic revision --autogenerate: Gera o arquivo de revisão explicado anteriormente. Note que a revisão pode não ser perfeita. Sempre verifique os scripts de revisão gerados e os corrige se necessário.
-- alembic upgrade head: Atualiza o banco de dados para a última versão definida pelo Alembic.
-- alembic upgrade {revision}: Atualiza o banco de dados para a versão definida em 'revision'. Esse campo está disponível nos scripts de revisão gerados, na variável 'revision'.
-- alembic downgrade -1: Desfaz a última alteração definida pelo alembic
-- alembic downgrade {revision}: Desfaz as últimas alterações definidas pelo alembic, até que se retorna à versão definida por {revision}.
+- O worker recupera as mensagens de filas SQS
+- Essas filas SQS representam mensagens entre serviços. Por exemplo, a fila "SQS_USER_PERFIS" representam mensagens do serviço de autenticação
+para o serviço de perfis. 
+- Essas mensagens possuem um campo que representam o tipo de evento. Com o tipo de evento, é possível saber do que se trata a mensagem e realizar as regras de negócio ncessárias. Então, o adapter é responsável por executar as regras de negócio ao detectar um evento em que é capaz de lidar. Por exemplo, na criação de perfis, é criado um perfil para o usuário que acabara de ser criado.
 
 ## Estrutura do código
 
@@ -51,34 +28,15 @@ Essa pasta é responsável por definir módulos responsáveis por:
 - Constantes
 - Logging
 
-### controllers
+### message_handlers
 
-Essa pasta é responsável por definir a primeira camada de acesso aos endpoints. Nela são definidos:
-
-- Rotas
-- Paths dos endpoitns
-- Dependências
-- Decorator para tratar exceções com rollback do banco de dados
-
-### services
-
-Define a lógica dos endpoints, abstraindo o acesso ao banco de dados, que é efetuado pelos módulos definidos na pastas repository
+Classes responsáveis pelas tratativas de mensagens
 
 ### repository
 
-Define os métodos que atuam diretamente com banco de dados
-
-### dependencies
-
-Define as injeções de dependência utilizadas pelos controllers. Pode-se citar:
-
-- Dependências de segurança, como o Form do OAuth2
-- Sessão do banco de dados assícrono
+Define os métodos que atuam diretamente com banco de dados=
 
 ### models
 
 Define as classes que representam o banco de dados, suas tabelas e campos
 
-### schemas
-
-Essa classe é necessária para definir inputs e outputs de endpoints, permitindo a documentação automática do FAST-API.
