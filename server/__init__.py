@@ -14,7 +14,7 @@ from server.configuration.custom_logging import Logger, MICROSERVICE_LOGGER_KWAR
 
 
 MAIN_LOGGER = get_main_logger()
-SLEEP_TIME = 1
+SLEEP_TIME = 100
 
 
 def get_sqs_usuario_perfil_message_processor(session, environment) -> SQSUsuarioPerfilMessageProcessor:
