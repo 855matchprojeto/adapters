@@ -1,3 +1,27 @@
+# Universidade Estadual de Campinas
+# Instituto da Computação
+
+## Disciplina: MC855-2s2021
+
+#### Professor e Assistente
+
+| Nome                     | Email                   |
+| ------------------------ | ------------------------|
+| Professora Juliana Borin | jufborin@unicamp.br     |
+| Assistente Paulo Kussler | paulo.kussler@gmail.com |
+
+#### Equipe
+
+| Nome               | RA               | Email                  | ID Git                |
+| ------------------ | ---------------- | ---------------------- |---------------------- |
+| Gustavo Henrique Libraiz Teixeira                   | 198537                 | g198537@dac.unicamp.br                     |   nugnu                    |
+| Lucas Henrique Machado Domingues                   | 182557                 | l182557@dac.unicamp.br                    |   lhmdomingues                   ||                    |                  |                        |                       |
+| Matheus Vicente Mazon                   | 203609                | m203609@dac.unicamp.br                     |   matheusmazon                    |
+| Pietro Pugliesi                   | 185921               | p185921@dac.unicamp.br                     |   pietro1704                   |
+| Caio Lucas Silveira de Sousa                  | 165461                | c165461@dac.unicamp.br                     |   caiolucasw                    |
+| Thomas Gomes Ferreira                  | 224919                | t224919@dac.unicamp.br                     |   Desnord                   |
+
+
 # Visão geral da arquitetura
 
 A arquitetura do back-end será definida em microsserviços. Ao contrário de uma arquitetura convencional monolítica, a aplicação em microsserviços é desmembrada em partes menores e independentes entre si.
@@ -15,6 +39,8 @@ Para isso, a rotina é definida da seguinte maneira:
 - Essas filas SQS representam mensagens entre serviços. Por exemplo, a fila "SQS_USER_PERFIS" representam mensagens do serviço de autenticação
 para o serviço de perfis. 
 - Essas mensagens possuem um campo que representam o tipo de evento. Com o tipo de evento, é possível saber do que se trata a mensagem e realizar as regras de negócio ncessárias. Então, o adapter é responsável por executar as regras de negócio ao detectar um evento em que é capaz de lidar. Por exemplo, na criação de perfis, é criado um perfil para o usuário que acabara de ser criado.
+
+**Note que não há um link para esse serviço, pois não se trata de uma API!**
 
 ## Estrutura do código
 
