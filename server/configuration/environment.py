@@ -29,11 +29,17 @@ class Environment(BaseSettings):
 
     # Configurações de banco de dados
 
+    NOTIFICATION_DATABASE_URL: str
     PROFILE_DATABASE_URL: str
 
     # QUEUE NAME(S)
 
     USER_PERFIS_SQS_NAME: str
+    INTERESSE_USUARIO_PROJETO_SQS_NAME: str
+
+    # CONFIGURACAO SLEEP TIME
+
+    SLEEP_TIME: int = 2
 
     class Config:
         env_file = '.env/ADAPTER-PERFIS.env'
@@ -41,6 +47,17 @@ class Environment(BaseSettings):
 
 
 class ProfileEnvironment(BaseSettings):
+
+    @staticmethod
+    def get_db_conn_async(database_url: str):
+        return re.sub(r'\bpostgres://\b', "postgresql+asyncpg://", database_url, count=1)
+
+    @staticmethod
+    def get_db_conn_default(database_url: str):
+        return re.sub(r'\bpostgres://\b', "postgresql://", database_url, count=1)
+
+
+class NotificationEnvironment(BaseSettings):
 
     @staticmethod
     def get_db_conn_async(database_url: str):
