@@ -5,21 +5,30 @@ from server.message_handlers.sqs_usuario_perfil_message_handler import SQSUsuari
     SQSUsuarioPerfilMessageProcessor
 from server.message_handlers import Message, MessageProcessor
 from server.message_handlers.sqs_usuario_perfil_message_handler import SQSUsuarioPerfilMessage, SQSUsuarioPerfilMessageProcessor
+from server.message_handlers.sqs_interesse_usuario_projeto_message_handler import SQSInteresseUsuarioProjeto, SQSInteresseUsuarioProjetoMessageProcessor
 from server.configuration.custom_logging import get_main_logger
 from server.configuration import exceptions
-from server.configuration.db import ProfileDB
+from server.configuration.db import ProfileDB, NotificationDB
 from server.repository.perfil_repository import PerfilRepository
 from typing import Type
 from server.configuration.custom_logging import Logger, MICROSERVICE_LOGGER_KWARGS
+from server.repository.notification_repository import NotificacaoRepository
 
 
 MAIN_LOGGER = get_main_logger()
-SLEEP_TIME = 100
 
 
 def get_sqs_usuario_perfil_message_processor(session, environment) -> SQSUsuarioPerfilMessageProcessor:
     return SQSUsuarioPerfilMessageProcessor(
         PerfilRepository(
+            db_session=session, environment=environment
+        )
+    )
+
+
+def get_sqs_interesse_usuario_projeto_processor(session, environment) -> SQSInteresseUsuarioProjetoMessageProcessor:
+    return SQSInteresseUsuarioProjetoMessageProcessor(
+        NotificacaoRepository(
             db_session=session, environment=environment
         )
     )
@@ -31,6 +40,11 @@ def get_message_dict(environment: Environment):
             "message_class": SQSUsuarioPerfilMessage,
             "message_processor_builder": get_sqs_usuario_perfil_message_processor,
             "session_maker": ProfileDB.build_async_session_maker()
+        },
+        environment.INTERESSE_USUARIO_PROJETO_SQS_NAME: {
+            "message_class": SQSInteresseUsuarioProjeto,
+            "message_processor_builder": get_sqs_interesse_usuario_projeto_processor,
+            "session_maker": NotificationDB.build_async_session_maker()
         }
     }
 
@@ -49,6 +63,10 @@ def get_all_queues(sqs_client, environment: Environment):
         dict(
             name=environment.USER_PERFIS_SQS_NAME,
             queue=sqs_client.get_queue_by_name(QueueName=environment.USER_PERFIS_SQS_NAME)
+        ),
+        dict(
+            name=environment.INTERESSE_USUARIO_PROJETO_SQS_NAME,
+            queue=sqs_client.get_queue_by_name(QueueName=environment.INTERESSE_USUARIO_PROJETO_SQS_NAME)
         )
     ]
 
@@ -70,7 +88,7 @@ async def message_loop(queue_dict_list, message_dict: dict, environment: Environ
                 message_dict[queue_name]['session_maker'],
                 environment
             )
-        await asyncio.sleep(SLEEP_TIME)
+        await asyncio.sleep(environment.SLEEP_TIME)
 
 
 async def handle_messages_from_queue(
