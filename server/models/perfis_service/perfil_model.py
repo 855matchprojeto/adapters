@@ -20,3 +20,5 @@ class Perfil(Base, PerfilBase):
     nome_exibicao = Column(String())
     nome_exibicao_normalized = Column(String())
 
+    url_imagem = Column(String())
+
