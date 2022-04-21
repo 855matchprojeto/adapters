@@ -4,11 +4,14 @@ from server.configuration.environment import Environment, get_environment_cached
 from server.message_handlers.sqs_usuario_perfil_message_handler import SQSUsuarioPerfilMessage, \
     SQSUsuarioPerfilMessageProcessor
 from server.message_handlers import Message, MessageProcessor
-from server.message_handlers.sqs_usuario_perfil_message_handler import SQSUsuarioPerfilMessage, SQSUsuarioPerfilMessageProcessor
-from server.message_handlers.sqs_interesse_usuario_projeto_message_handler import SQSInteresseUsuarioProjeto, SQSInteresseUsuarioProjetoMessageProcessor
+from server.message_handlers.sqs_usuario_perfil_message_handler import (
+    SQSUsuarioPerfilMessage, SQSUsuarioPerfilMessageProcessor
+)
+from server.message_handlers.sqs_interesse_usuario_projeto_message_handler import (
+    SQSInteresseUsuarioProjeto, SQSInteresseUsuarioProjetoMessageProcessor
+)
 from server.configuration.custom_logging import get_main_logger
 from server.configuration import exceptions
-from server.configuration.db import ProfileDB, NotificationDB
 from server.repository.perfil_repository import PerfilRepository
 from typing import Type
 from server.configuration.custom_logging import Logger, MICROSERVICE_LOGGER_KWARGS
@@ -18,18 +21,18 @@ from server.repository.notification_repository import NotificacaoRepository
 MAIN_LOGGER = get_main_logger()
 
 
-def get_sqs_usuario_perfil_message_processor(session, environment) -> SQSUsuarioPerfilMessageProcessor:
+def get_sqs_usuario_perfil_message_processor(environment) -> SQSUsuarioPerfilMessageProcessor:
     return SQSUsuarioPerfilMessageProcessor(
         PerfilRepository(
-            db_session=session, environment=environment
+            environment=environment
         )
     )
 
 
-def get_sqs_interesse_usuario_projeto_processor(session, environment) -> SQSInteresseUsuarioProjetoMessageProcessor:
+def get_sqs_interesse_usuario_projeto_processor(environment) -> SQSInteresseUsuarioProjetoMessageProcessor:
     return SQSInteresseUsuarioProjetoMessageProcessor(
         NotificacaoRepository(
-            db_session=session, environment=environment
+            environment=environment
         )
     )
 
@@ -38,13 +41,11 @@ def get_message_dict(environment: Environment):
     return {
         environment.USER_PERFIS_SQS_NAME: {
             "message_class": SQSUsuarioPerfilMessage,
-            "message_processor_builder": get_sqs_usuario_perfil_message_processor,
-            "session_maker": ProfileDB.build_async_session_maker()
+            "message_processor_builder": get_sqs_usuario_perfil_message_processor
         },
         environment.INTERESSE_USUARIO_PROJETO_SQS_NAME: {
             "message_class": SQSInteresseUsuarioProjeto,
-            "message_processor_builder": get_sqs_interesse_usuario_projeto_processor,
-            "session_maker": NotificationDB.build_async_session_maker()
+            "message_processor_builder": get_sqs_interesse_usuario_projeto_processor
         }
     }
 
@@ -85,7 +86,6 @@ async def message_loop(queue_dict_list, message_dict: dict, environment: Environ
                 queue_name,
                 message_dict[queue_name]['message_class'],
                 message_dict[queue_name]['message_processor_builder'],
-                message_dict[queue_name]['session_maker'],
                 environment
             )
         await asyncio.sleep(environment.SLEEP_TIME)
@@ -93,8 +93,7 @@ async def message_loop(queue_dict_list, message_dict: dict, environment: Environ
 
 async def handle_messages_from_queue(
     queue, queue_name, message_class: Type[Message],
-    message_processor_builder,
-    session_maker, environment
+    message_processor_builder, environment
 ):
     for sqs_msg in queue.receive_messages():
         MAIN_LOGGER.info(f"Mensagem recebida da fila {queue_name}: {sqs_msg.body}")
@@ -102,21 +101,17 @@ async def handle_messages_from_queue(
             sqs_msg,
             message_class(sqs_msg.body),
             message_processor_builder,
-            session_maker,
             environment
         )
 
 
 async def handle_message_from_queue(
-    sqs_msg, msg_obj: Message, message_processor_builder,
-    session_maker, environment
+    sqs_msg, msg_obj: Message, message_processor_builder, environment
 ):
     try:
-        async with session_maker() as session:
-            async with session.begin():
-                message_processor = message_processor_builder(session, environment)
-                await message_processor.process_message(msg_obj)
-                sqs_msg.delete()
+        message_processor = message_processor_builder(environment)
+        await message_processor.process_message(msg_obj)
+        sqs_msg.delete()
     except exceptions.CustomMsgException as ex:
         MAIN_LOGGER.warning("Erro detectado pela aplicacao")
         MAIN_LOGGER.exception(ex)
