@@ -1,9 +1,5 @@
 from server.message_handlers import Message, MessageProcessor
-from server.configuration.db import ProfileDB
-from server.configuration.environment import get_environment_cached
 from server.repository.notification_repository import NotificacaoRepository
-from server import utils
-from datetime import datetime
 import json
 from copy import deepcopy
 
@@ -52,6 +48,11 @@ class SQSInteresseUsuarioProjetoMessageProcessor(MessageProcessor):
             # Definindo payload para a tabela de notificacao no serviço de notificacao
             payloads.append({
                 'is_read': False,
+                'tipo': 'INTERESSE_USUARIO_PROJETO',
+                'json_details': {
+                    'user': user_dict,
+                    'project': project_dict
+                },
                 'conteudo': conteudo,
                 'guid_usuario': guid_owner
             })

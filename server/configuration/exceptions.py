@@ -21,3 +21,14 @@ class EventHandlerNotImplementedException(CustomMsgException):
     ) -> None:
         super().__init__(error_id, message, detail)
 
+
+class RequestFailException(CustomMsgException):
+
+    def __init__(
+        self,
+        error_id='REQUEST_FAIL',
+        message='Ocorreu um erro ao processar uma requisição',
+        detail=''
+    ) -> None:
+        super().__init__(error_id, message, detail)
+

@@ -1,6 +1,4 @@
 from server.message_handlers import Message, MessageProcessor
-from server.configuration.db import ProfileDB
-from server.configuration.environment import get_environment_cached
 from server.repository.perfil_repository import PerfilRepository
 from server import utils
 from datetime import datetime
@@ -38,9 +36,7 @@ class SQSUsuarioPerfilMessageProcessor(MessageProcessor):
 
         # Definindo payload para a tabela de usuario no serviço de perfis
         user_payload = msg_body
-        _date = datetime.strptime(user_payload['created_at'], "%Y-%m-%d %H:%M:%S.%f")
-        user_payload['created_at'] = _date
-        user_payload['updated_at'] = _date
+        user_payload['updated_at'] = user_payload['created_at']
 
         # Definindo payload para a tabela de perfis no serviço de perfis
         profile_payload = {
@@ -68,6 +64,5 @@ class SQSUsuarioPerfilMessageProcessor(MessageProcessor):
         """
 
         payload_dict = SQSUsuarioPerfilMessageProcessor.get_payloads_event_create(msg_body)
-        await self.profile_repo.insere_usuario(payload_dict['user'])
-        await self.profile_repo.insere_perfil(payload_dict['profile'])
+        await self.profile_repo.insere_perfil(payload_dict)
 
