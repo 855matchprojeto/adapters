@@ -1,35 +1,52 @@
-from server.configuration.db import AsyncSession
-from sqlalchemy import select, update, insert, delete, literal_column
-from typing import List, Optional
+import aiohttp.web_response
+from server.requests.client.http_client import HttpRequestClient
 from server.configuration.environment import Environment
-from sqlalchemy.orm import selectinload
-from server.models.perfis_service.usuario_model import Usuario
-from server.models.perfis_service.perfil_model import Perfil
+from server.configuration.custom_logging import get_main_logger
+from server.configuration.exceptions import RequestFailException
+
+
+MAIN_LOGGER = get_main_logger()
 
 
 class PerfilRepository:
 
-    def __init__(self, db_session: AsyncSession, environment: Optional[Environment] = None):
-        self.db_session = db_session
+    @staticmethod
+    def build_auth_headers(environment: Environment):
+        return {
+            'Authorization': f'Bearer {environment.OWNER_USER_TOKEN}'
+        }
+
+    def __init__(self, request_client: HttpRequestClient, environment: Environment):
         self.environment = environment
+        self.request_client = request_client if request_client else HttpRequestClient()
 
-    async def insere_perfil(self, perfil_dict: dict) -> Perfil:
-        stmt = (
-            insert(Perfil).
-            returning(literal_column('*')).
-            values(**perfil_dict)
-        )
-        query = await self.db_session.execute(stmt)
-        row_to_dict = dict(query.fetchone())
-        return Perfil(**row_to_dict)
+        self.auth_headers = self.build_auth_headers(environment)
 
-    async def insere_usuario(self, usuario_dict: dict) -> Perfil:
-        stmt = (
-            insert(Usuario).
-            returning(literal_column('*')).
-            values(**usuario_dict)
+    async def insere_perfil(self, perfil_dict: dict) -> dict:
+        MAIN_LOGGER.info(f"Inserindo perfil no ms_perfil {perfil_dict}")
+
+        response: aiohttp.web_response.json_response = await self.request_client.request(
+            'POST', f'{self.environment.MS_PERFIS_ENDPOINT}/{self.environment.MS_PERFIS_INSERT_PERFIL_PATH}',
+            json=perfil_dict,
+            headers=self.auth_headers
         )
-        query = await self.db_session.execute(stmt)
-        row_to_dict = dict(query.fetchone())
-        return Usuario(**row_to_dict)
+
+        if str(response.status)[0] != '2':
+            raise RequestFailException('Ocorreu um erro ao inserir uma notificação')
+
+        return response.json()
+
+    async def insere_usuario(self, usuario_dict: dict) -> dict:
+        MAIN_LOGGER.info(f"Inserindo usuário no ms_perfil {usuario_dict}")
+
+        response: aiohttp.web_response.json_response = await self.request_client.request(
+            'POST', f'{self.environment.MS_PERFIS_ENDPOINT}/{self.environment.MS_PERFIS_INSERT_USUARIO_PATH}',
+            json=usuario_dict,
+            headers=self.auth_headers
+        )
+
+        if str(response.status)[0] != '2':
+            raise RequestFailException('Ocorreu um erro ao inserir uma notificação')
+
+        return response.json()
 

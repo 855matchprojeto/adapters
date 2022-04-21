@@ -1,4 +1,3 @@
-import re
 from pydantic import BaseSettings
 from functools import lru_cache
 import pathlib
@@ -27,10 +26,14 @@ class Environment(BaseSettings):
     AWS_SECRET_KEY: str
     AWS_REGION_NAME: str
 
-    # Configurações de banco de dados
+    # Configurações de serviços
 
-    NOTIFICATION_DATABASE_URL: str
-    PROFILE_DATABASE_URL: str
+    MS_PERFIS_ENDPOINT: str
+    MS_PERFIS_INSERT_PERFIL_PATH: str
+    MS_PERFIS_INSERT_USUARIO_PATH: str
+
+    MS_NOTIFICACAO_ENDPOINT: str
+    MS_NOTIFICCAO_INSERT_NOTIFICACAO_PATH: str
 
     # QUEUE NAME(S)
 
@@ -41,29 +44,11 @@ class Environment(BaseSettings):
 
     SLEEP_TIME: int = 2
 
+    # TOKEN OWNER
+
+    OWNER_USER_TOKEN: str
+
     class Config:
         env_file = '.env/ADAPTER-PERFIS.env'
         env_file_encoding = 'utf-8'
-
-
-class ProfileEnvironment(BaseSettings):
-
-    @staticmethod
-    def get_db_conn_async(database_url: str):
-        return re.sub(r'\bpostgres://\b', "postgresql+asyncpg://", database_url, count=1)
-
-    @staticmethod
-    def get_db_conn_default(database_url: str):
-        return re.sub(r'\bpostgres://\b', "postgresql://", database_url, count=1)
-
-
-class NotificationEnvironment(BaseSettings):
-
-    @staticmethod
-    def get_db_conn_async(database_url: str):
-        return re.sub(r'\bpostgres://\b', "postgresql+asyncpg://", database_url, count=1)
-
-    @staticmethod
-    def get_db_conn_default(database_url: str):
-        return re.sub(r'\bpostgres://\b', "postgresql://", database_url, count=1)
 
