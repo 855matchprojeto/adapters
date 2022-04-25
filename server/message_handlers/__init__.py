@@ -46,7 +46,7 @@ class MessageProcessor:
         if self._handler_cache is None:
             self._handler_cache = {}
 
-        event_name = msg.event_name
+        event_name = msg.event_name.lower()
         msg_body = msg.body
         event_handler = self._handler_cache.get(event_name, None)
 

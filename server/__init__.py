@@ -7,8 +7,8 @@ from server.message_handlers import Message, MessageProcessor
 from server.message_handlers.sqs_usuario_perfil_message_handler import (
     SQSUsuarioPerfilMessage, SQSUsuarioPerfilMessageProcessor
 )
-from server.message_handlers.sqs_interesse_usuario_projeto_message_handler import (
-    SQSInteresseUsuarioProjeto, SQSInteresseUsuarioProjetoMessageProcessor
+from server.message_handlers.sqs_match_notification_message_handler import (
+    SQSMatchNotificationMessage, SQSMatchNotificationMessageProcessor
 )
 from server.configuration.custom_logging import get_main_logger
 from server.configuration import exceptions
@@ -23,17 +23,13 @@ MAIN_LOGGER = get_main_logger()
 
 def get_sqs_usuario_perfil_message_processor(environment) -> SQSUsuarioPerfilMessageProcessor:
     return SQSUsuarioPerfilMessageProcessor(
-        PerfilRepository(
-            environment=environment
-        )
+        environment
     )
 
 
-def get_sqs_interesse_usuario_projeto_processor(environment) -> SQSInteresseUsuarioProjetoMessageProcessor:
-    return SQSInteresseUsuarioProjetoMessageProcessor(
-        NotificacaoRepository(
-            environment=environment
-        )
+def get_sqs_interesse_usuario_projeto_processor(environment) -> SQSMatchNotificationMessageProcessor:
+    return SQSMatchNotificationMessageProcessor(
+        environment
     )
 
 
@@ -44,7 +40,7 @@ def get_message_dict(environment: Environment):
             "message_processor_builder": get_sqs_usuario_perfil_message_processor
         },
         environment.INTERESSE_USUARIO_PROJETO_SQS_NAME: {
-            "message_class": SQSInteresseUsuarioProjeto,
+            "message_class": SQSMatchNotificationMessage,
             "message_processor_builder": get_sqs_interesse_usuario_projeto_processor
         }
     }

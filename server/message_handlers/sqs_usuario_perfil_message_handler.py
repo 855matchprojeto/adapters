@@ -1,8 +1,8 @@
 from server.message_handlers import Message, MessageProcessor
 from server.repository.perfil_repository import PerfilRepository
 from server import utils
-from datetime import datetime
 import json
+from server.configuration.environment import Environment
 
 
 """
@@ -51,11 +51,11 @@ class SQSUsuarioPerfilMessageProcessor(MessageProcessor):
         }
 
     def __init__(
-        self,
-        profile_repo: PerfilRepository
+        self, environment: Environment = None,
+        profile_repo: PerfilRepository = None
     ):
         super().__init__()
-        self.profile_repo = profile_repo
+        self.profile_repo = profile_repo if profile_repo else PerfilRepository(environment)
 
     async def handle_event_create(self, msg_body: dict, event_name: str):
 
